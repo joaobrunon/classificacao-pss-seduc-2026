@@ -23,6 +23,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}td.nm{white-space:n
 .tag.pcd{color:var(--ok);border-color:var(--ok)}.tag.emp{color:var(--warn);border-color:var(--warn)}
 .pg{display:flex;gap:8px;justify-content:center;align-items:center;margin:14px 0}button{font:inherit;padding:7px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;cursor:pointer}button:disabled{opacity:.4}
 .note{margin-top:22px;font-size:.8rem;color:var(--mut)}
+dialog{max-width:480px;width:calc(100% - 32px);border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx);padding:20px}
+dialog::backdrop{background:rgba(0,0,0,.55)}dialog h2{margin:0 0 8px;font-size:1.15rem}dialog a{color:var(--ac);word-break:break-all}
+dialog button{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;margin-top:6px}
 @media(max-width:560px){.box{grid-template-columns:1fr}}
 </style>
 </head>
@@ -41,8 +44,17 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}td.nm{white-space:n
 <th class="n">Class.</th><th>Diretoria</th><th>Inscrição</th><th>Nome</th><th class="n">Nota final</th><th class="n">Objetiva</th><th class="n">Prática</th><th class="n">Títulos</th></tr></thead>
 <tbody id="tb"></tbody></table></div>
 <div class="pg"><button id="prev">← Anterior</button><span id="pn"></span><button id="next">Próxima →</button></div>
-<p class="note">Nota final = objetiva (0–40) + prática (0–30) + títulos (0–10). Candidatos PPI com a pontuação diferenciada já aplicada. Desempate conforme o edital (idade ≥60, prática, específicos, gerais, títulos, idade); “empate” indica quem permaneceu empatado nos critérios disponíveis. Prática e títulos são resultados <b>preliminares</b>. Consulta não oficial — vale o Diário Oficial / FGV.</p>
+<p class="note">Nota final = objetiva (0–40) + prática (0–30) + títulos (0–10). Candidatos PPI com a pontuação diferenciada já aplicada. Desempate conforme o edital (idade ≥60, prática, específicos, gerais, títulos, idade); “empate” indica quem permaneceu empatado nos critérios disponíveis. Prática e títulos são resultados <b>preliminares</b>. Consulta não oficial — vale o Diário Oficial / FGV. <a href="#" id="reabrir">Ver aviso</a></p>
 </main>
+<dialog id="aviso">
+  <h2>Aviso importante</h2>
+  <p><b>Esta não é a classificação final nem oficial.</b></p>
+  <p>Esta classificação foi calculada de forma independente, usando os documentos públicos divulgados na página da FGV do processo seletivo:
+  <a href="https://conhecimento.fgv.br/concursos/seducsp26edbasica" target="_blank" rel="noopener">conhecimento.fgv.br/concursos/seducsp26edbasica</a>.</p>
+  <p>Foram usados o resultado definitivo da prova objetiva, os resultados <b>preliminares</b> da prova prática e da avaliação de títulos, e a relação de PcD deferidos, aplicando as regras do edital. Os resultados podem mudar após recursos e não incluem critérios de desempate que dependem de documentos dos candidatos.</p>
+  <p>Para a classificação oficial, consulte o Diário Oficial do Estado e o site da FGV.</p>
+  <button id="ok">Entendi</button>
+</dialog>
 <script>
 const $=id=>document.getElementById(id), PER=50;
 const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
@@ -66,6 +78,8 @@ function draw(){ const multi=$("disc").value==="*", s=page*PER, pages=Math.max(1
   <td class="n"><b>${f(r.t)}</b></td><td class="n">${f(r.o)}</td><td class="n">${f(r.p)}</td><td class="n">${f(r.ti)}</td></tr>`).join("")||'<tr><td colspan="8">Nenhum resultado.</td></tr>';
   $("info").textContent=view.length.toLocaleString("pt-BR")+" candidato(s)"; $("pn").textContent=(page+1)+" / "+pages;
   $("prev").disabled=page===0; $("next").disabled=page+1>=pages; }
+$("ok").onclick=()=>$("aviso").close(); $("aviso").showModal();
+$("reabrir").onclick=e=>{e.preventDefault();$("aviso").showModal()};
 (async()=>{ man=await (await fetch("data/disciplinas.json")).json();
   $("disc").innerHTML=man.map(m=>`<option value="${m.arq}">${m.nome}</option>`).join("")+'<option value="*">Todas as disciplinas</option>';
   $("disc").onchange=setDisc; $("ure").onchange=filter; $("pcd").onchange=filter;
