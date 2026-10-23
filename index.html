@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classificação PSS SEDUC-SP 2026</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#667085;--bd:#e3e6ea;--ac:#1d4ed8;--ok:#0f766e;--warn:#b45309}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1216;--card:#171b21;--tx:#e8eaed;--mut:#9aa3af;--bd:#2a3039;--ac:#6ea0ff;--ok:#2dd4bf;--warn:#fbbf24}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:1.35rem;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size:.9rem}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.box label{display:grid;gap:4px;font-size:.8rem;color:var(--mut)}.box .full{grid-column:1/-1}
+select,input{font:inherit;padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);width:100%}
+.chk{display:flex!important;align-items:center;gap:8px;grid-template-columns:none}.chk input{width:auto}
+#info{margin:12px 2px;color:var(--mut);font-size:.85rem}
+.tw{background:var(--card);border:1px solid var(--bd);border-radius:10px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:720px}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{font-size:.75rem;text-transform:uppercase;color:var(--mut);position:sticky;top:0;background:var(--card)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}td.nm{white-space:normal;min-width:200px}
+.tag{font-size:.7rem;padding:1px 6px;border-radius:99px;border:1px solid var(--bd);margin-left:4px;color:var(--mut)}
+.tag.pcd{color:var(--ok);border-color:var(--ok)}.tag.emp{color:var(--warn);border-color:var(--warn)}
+.pg{display:flex;gap:8px;justify-content:center;align-items:center;margin:14px 0}button{font:inherit;padding:7px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;cursor:pointer}button:disabled{opacity:.4}
+.note{margin-top:22px;font-size:.8rem;color:var(--mut)}
+@media(max-width:560px){.box{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>Classificação PSS SEDUC-SP 2026 — Professor (Educação Básica)</h1>
+<p class="sub">Por Diretoria de Ensino e disciplina · objetiva (definitiva) + prática + títulos (preliminares)</p>
+<div class="box">
+  <label>Disciplina<select id="disc"></select></label>
+  <label>Diretoria de Ensino<select id="ure"><option value="">Todas</option></select></label>
+  <label class="full">Nome ou nº de inscrição<input id="q" type="search" placeholder="Digite parte do nome ou a inscrição" autocomplete="off"></label>
+  <label class="chk full"><input id="pcd" type="checkbox"> Mostrar só a lista especial PcD</label>
+</div>
+<div id="info">Carregando…</div>
+<div class="tw"><table><thead><tr>
+<th class="n">Class.</th><th>Diretoria</th><th>Inscrição</th><th>Nome</th><th class="n">Nota final</th><th class="n">Objetiva</th><th class="n">Prática</th><th class="n">Títulos</th></tr></thead>
+<tbody id="tb"></tbody></table></div>
+<div class="pg"><button id="prev">← Anterior</button><span id="pn"></span><button id="next">Próxima →</button></div>
+<p class="note">Nota final = objetiva (0–40) + prática (0–30) + títulos (0–10). Candidatos PPI com a pontuação diferenciada já aplicada. Desempate conforme o edital (idade ≥60, prática, específicos, gerais, títulos, idade); “empate” indica quem permaneceu empatado nos critérios disponíveis. Prática e títulos são resultados <b>preliminares</b>. Consulta não oficial — vale o Diário Oficial / FGV.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id), PER=50;
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+let man=[],cache={},rows=[],view=[],page=0;
+const f=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+async function load(arq){ if(!cache[arq]){const r=await fetch("data/"+arq+".json"); const j=await r.json();
+  const nome=man.find(m=>m.arq===arq).nome; cache[arq]=j.map(a=>({d:nome,ure:a[0],c:a[1],i:a[2],n:a[3],s:norm(a[3]),t:a[4],o:a[5],p:a[6],ti:a[7],ppi:a[8],pcd:a[9],cp:a[10],emp:a[11]}));}
+  return cache[arq]; }
+async function setDisc(){ $("info").textContent="Carregando…"; const v=$("disc").value;
+  rows=v==="*"?(await Promise.all(man.map(m=>load(m.arq)))).flat():await load(v);
+  const ures=[...new Set(rows.map(r=>r.ure))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  const cur=$("ure").value; $("ure").innerHTML='<option value="">Todas</option>'+ures.map(u=>`<option>${u}</option>`).join("");
+  if(ures.includes(cur))$("ure").value=cur; filter(); }
+function filter(){ const q=norm($("q").value.trim()),u=$("ure").value,p=$("pcd").checked;
+  view=rows.filter(r=>(!u||r.ure===u)&&(!p||r.pcd)&&(!q||r.s.includes(q)||r.i.includes(q)));
+  if(p)view.sort((a,b)=>a.d.localeCompare(b.d)||a.ure.localeCompare(b.ure)||a.cp-b.cp);
+  page=0; draw(); }
+function draw(){ const multi=$("disc").value==="*", s=page*PER, pages=Math.max(1,Math.ceil(view.length/PER)), p=$("pcd").checked;
+  $("tb").innerHTML=view.slice(s,s+PER).map(r=>`<tr><td class="n"><b>${p?r.cp:r.c}º</b>${p?`<span class="tag">geral ${r.c}º</span>`:""}</td><td>${r.ure}</td><td>${r.i}</td>
+  <td class="nm">${r.n}${multi?`<span class="tag">${r.d}</span>`:""}${r.ppi?'<span class="tag">PPI</span>':""}${r.pcd&&!p?'<span class="tag pcd">PcD '+r.cp+'º</span>':""}${r.emp?'<span class="tag emp">empate</span>':""}</td>
+  <td class="n"><b>${f(r.t)}</b></td><td class="n">${f(r.o)}</td><td class="n">${f(r.p)}</td><td class="n">${f(r.ti)}</td></tr>`).join("")||'<tr><td colspan="8">Nenhum resultado.</td></tr>';
+  $("info").textContent=view.length.toLocaleString("pt-BR")+" candidato(s)"; $("pn").textContent=(page+1)+" / "+pages;
+  $("prev").disabled=page===0; $("next").disabled=page+1>=pages; }
+(async()=>{ man=await (await fetch("data/disciplinas.json")).json();
+  $("disc").innerHTML=man.map(m=>`<option value="${m.arq}">${m.nome}</option>`).join("")+'<option value="*">Todas as disciplinas</option>';
+  $("disc").onchange=setDisc; $("ure").onchange=filter; $("pcd").onchange=filter;
+  let t; $("q").oninput=()=>{clearTimeout(t);t=setTimeout(filter,200)};
+  $("prev").onclick=()=>{page--;draw();scrollTo(0,0)}; $("next").onclick=()=>{page++;draw();scrollTo(0,0)};
+  setDisc(); })();
+</script>
+</body>
+</html>
