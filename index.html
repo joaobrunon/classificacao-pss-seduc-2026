@@ -37,14 +37,15 @@ dialog button{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;
   <label>Disciplina<select id="disc"></select></label>
   <label>Diretoria de Ensino<select id="ure"><option value="">Todas</option></select></label>
   <label class="full">Nome ou nº de inscrição<input id="q" type="search" placeholder="Digite parte do nome ou a inscrição" autocomplete="off"></label>
-  <label class="chk full"><input id="pcd" type="checkbox"> Mostrar só a lista especial PcD</label>
+  <label class="chk"><input id="pcd" type="checkbox"> Só lista especial PcD</label>
+  <label class="chk"><input id="ppi" type="checkbox"> Só candidatos PPI (pontuação diferenciada)</label>
 </div>
 <div id="info">Carregando…</div>
 <div class="tw"><table><thead><tr>
 <th class="n">Class.</th><th>Diretoria</th><th>Inscrição</th><th>Nome</th><th class="n">Nota final</th><th class="n">Objetiva</th><th class="n">Prática</th><th class="n">Títulos</th></tr></thead>
 <tbody id="tb"></tbody></table></div>
 <div class="pg"><button id="prev">← Anterior</button><span id="pn"></span><button id="next">Próxima →</button></div>
-<p class="note">Nota final = objetiva (0–40) + prática (0–30) + títulos (0–10). Candidatos PPI com a pontuação diferenciada já aplicada. Desempate conforme o edital (idade ≥60, prática, específicos, gerais, títulos, idade); “empate” indica quem permaneceu empatado nos critérios disponíveis. Prática e títulos são resultados <b>preliminares</b>. Consulta não oficial — vale a classificação oficial, quando publicada (Diário Oficial / FGV). Tempo de magistério e outras pontuações não estão incluídos. <a href="#" id="reabrir">Ver aviso</a></p>
+<p class="note">Nota final = objetiva (0–40) + prática (0–30) + títulos (0–10). Candidatos PPI (pretos, pardos e indígenas que optaram pela pontuação diferenciada) têm o acréscimo já aplicado e permanecem na lista geral; o filtro PPI mostra a posição entre eles, apenas para consulta. Desempate conforme o edital (idade ≥60, prática, específicos, gerais, títulos, idade); “empate” indica quem permaneceu empatado nos critérios disponíveis. Prática e títulos são resultados <b>preliminares</b>. Consulta não oficial — vale a classificação oficial, quando publicada (Diário Oficial / FGV). Tempo de magistério e outras pontuações não estão incluídos. <a href="#" id="reabrir">Ver aviso</a></p>
 </main>
 <dialog id="aviso">
   <h2>Aviso importante</h2>
@@ -63,18 +64,19 @@ let man=[],cache={},rows=[],view=[],page=0;
 const f=n=>n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
 async function load(arq){ if(!cache[arq]){const r=await fetch("data/"+arq+".json"); const j=await r.json();
   const nome=man.find(m=>m.arq===arq).nome; cache[arq]=j.map(a=>({d:nome,ure:a[0],c:a[1],i:a[2],n:a[3],s:norm(a[3]),t:a[4],o:a[5],p:a[6],ti:a[7],ppi:a[8],pcd:a[9],cp:a[10],emp:a[11]}));}
+  let k="",n=0; for(const r of cache[arq]){const kk=r.ure; if(kk!==k){k=kk;n=0} r.cpp=r.ppi?++n:0;}
   return cache[arq]; }
 async function setDisc(){ $("info").textContent="Carregando…"; const v=$("disc").value;
   rows=v==="*"?(await Promise.all(man.map(m=>load(m.arq)))).flat():await load(v);
   const ures=[...new Set(rows.map(r=>r.ure))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
   const cur=$("ure").value; $("ure").innerHTML='<option value="">Todas</option>'+ures.map(u=>`<option>${u}</option>`).join("");
   if(ures.includes(cur))$("ure").value=cur; filter(); }
-function filter(){ const q=norm($("q").value.trim()),u=$("ure").value,p=$("pcd").checked;
-  view=rows.filter(r=>(!u||r.ure===u)&&(!p||r.pcd)&&(!q||r.s.includes(q)||r.i.includes(q)));
-  if(p)view.sort((a,b)=>a.d.localeCompare(b.d)||a.ure.localeCompare(b.ure)||a.cp-b.cp);
+function filter(){ const q=norm($("q").value.trim()),u=$("ure").value,p=$("pcd").checked,pp=$("ppi").checked;
+  view=rows.filter(r=>(!u||r.ure===u)&&(!p||r.pcd)&&(!pp||r.ppi)&&(!q||r.s.includes(q)||r.i.includes(q)));
+  if(p||pp)view.sort((a,b)=>a.d.localeCompare(b.d)||a.ure.localeCompare(b.ure)||(p?a.cp-b.cp:a.cpp-b.cpp));
   page=0; draw(); }
-function draw(){ const multi=$("disc").value==="*", s=page*PER, pages=Math.max(1,Math.ceil(view.length/PER)), p=$("pcd").checked;
-  $("tb").innerHTML=view.slice(s,s+PER).map(r=>`<tr><td class="n"><b>${p?r.cp:r.c}º</b>${p?`<span class="tag">geral ${r.c}º</span>`:""}</td><td>${r.ure}</td><td>${r.i}</td>
+function draw(){ const multi=$("disc").value==="*", s=page*PER, pages=Math.max(1,Math.ceil(view.length/PER)), p=$("pcd").checked,pp=$("ppi").checked&&!p;
+  $("tb").innerHTML=view.slice(s,s+PER).map(r=>`<tr><td class="n"><b>${p?r.cp:pp?r.cpp:r.c}º</b>${p||pp?`<span class="tag">geral ${r.c}º</span>`:""}</td><td>${r.ure}</td><td>${r.i}</td>
   <td class="nm">${r.n}${multi?`<span class="tag">${r.d}</span>`:""}${r.ppi?'<span class="tag">PPI</span>':""}${r.pcd&&!p?'<span class="tag pcd">PcD '+r.cp+'º</span>':""}${r.emp?'<span class="tag emp">empate</span>':""}</td>
   <td class="n"><b>${f(r.t)}</b></td><td class="n">${f(r.o)}</td><td class="n">${f(r.p)}</td><td class="n">${f(r.ti)}</td></tr>`).join("")||'<tr><td colspan="8">Nenhum resultado.</td></tr>';
   $("info").textContent=view.length.toLocaleString("pt-BR")+" candidato(s)"; $("pn").textContent=(page+1)+" / "+pages;
@@ -83,7 +85,7 @@ $("ok").onclick=()=>$("aviso").close(); $("aviso").showModal();
 $("reabrir").onclick=e=>{e.preventDefault();$("aviso").showModal()};
 (async()=>{ man=await (await fetch("data/disciplinas.json")).json();
   $("disc").innerHTML=man.map(m=>`<option value="${m.arq}">${m.nome}</option>`).join("")+'<option value="*">Todas as disciplinas</option>';
-  $("disc").onchange=setDisc; $("ure").onchange=filter; $("pcd").onchange=filter;
+  $("disc").onchange=setDisc; $("ure").onchange=filter; $("pcd").onchange=filter; $("ppi").onchange=filter;
   let t; $("q").oninput=()=>{clearTimeout(t);t=setTimeout(filter,200)};
   $("prev").onclick=()=>{page--;draw();scrollTo(0,0)}; $("next").onclick=()=>{page++;draw();scrollTo(0,0)};
   setDisc(); })();
