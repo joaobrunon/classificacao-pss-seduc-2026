@@ -87,7 +87,7 @@ function draw(){ const multi=$("disc").value==="*", s=page*PER, pages=Math.max(1
 $("ok").onclick=()=>$("aviso").close(); $("aviso").showModal();
 $("reabrir").onclick=$("reabrir2").onclick=e=>{e.preventDefault();$("aviso").showModal()};
 (async()=>{ man=await (await fetch("data/disciplinas.json")).json();
-  $("disc").innerHTML=man.map(m=>`<option value="${m.arq}">${m.nome}</option>`).join("")+'<option value="*">Todas as disciplinas</option>';
+  $("disc").innerHTML='<option value="*">Todas as disciplinas</option>'+man.map(m=>`<option value="${m.arq}">${m.nome}</option>`).join(""); $("disc").value="*";
   $("disc").onchange=setDisc; $("ure").onchange=filter; $("pcd").onchange=filter; $("ppi").onchange=filter;
   let t; $("q").oninput=()=>{clearTimeout(t);t=setTimeout(filter,200)};
   $("prev").onclick=()=>{page--;draw();scrollTo(0,0)}; $("next").onclick=()=>{page++;draw();scrollTo(0,0)};
