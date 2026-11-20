@@ -23,6 +23,8 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}td.nm{white-space:n
 .tag.pcd{color:var(--ok);border-color:var(--ok)}.tag.emp{color:var(--warn);border-color:var(--warn)}
 .pg{display:flex;gap:8px;justify-content:center;align-items:center;margin:14px 0}button{font:inherit;padding:7px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;cursor:pointer}button:disabled{opacity:.4}
 .note{margin-top:22px;font-size:.8rem;color:var(--mut)}
+.alerta{position:sticky;top:0;z-index:5;margin:0 0 12px;padding:10px 12px;border:1px solid var(--warn);border-left-width:5px;border-radius:8px;background:var(--card);font-size:.85rem;line-height:1.4}
+.alerta a{color:var(--ac)}
 dialog{max-width:480px;width:calc(100% - 32px);border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx);padding:20px}
 dialog::backdrop{background:rgba(0,0,0,.55)}dialog h2{margin:0 0 8px;font-size:1.15rem}dialog a{color:var(--ac);word-break:break-all}
 dialog button{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;margin-top:6px}
@@ -33,6 +35,7 @@ dialog button{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;
 <main>
 <h1>Classificação PSS SEDUC-SP 2026 — Professor (Educação Básica)</h1>
 <p class="sub">Por Diretoria de Ensino e disciplina · objetiva + prática + títulos (resultados definitivos) · atualizado em 20/11/2026</p>
+<div class="alerta" role="note"><b>⚠ Classificação NÃO oficial e NÃO final.</b> Calculada com os resultados definitivos da objetiva, da prática e dos títulos divulgados pela FGV. <b>Não inclui tempo de magistério e outras pontuações</b> de etapas posteriores. Vale somente a classificação oficial, quando publicada no Diário Oficial do Estado e no site da FGV. <a href="#" id="reabrir2">Saiba mais</a></div>
 <div class="box">
   <label>Disciplina<select id="disc"></select></label>
   <label>Diretoria de Ensino<select id="ure"><option value="">Todas</option></select></label>
@@ -50,11 +53,11 @@ dialog button{background:var(--ac);color:#fff;border-color:var(--ac);width:100%;
 <dialog id="aviso">
   <h2>Aviso importante</h2>
   <p><b>Esta não é a classificação final nem oficial.</b></p>
-  <p>Esta classificação foi calculada de forma independente, usando os documentos públicos divulgados na página da FGV do processo seletivo:
+  <p>Esta classificação foi calculada de forma independente, com os documentos públicos divulgados na página da FGV do processo seletivo:
   <a href="https://conhecimento.fgv.br/concursos/seducsp26edbasica" target="_blank" rel="noopener">conhecimento.fgv.br/concursos/seducsp26edbasica</a>.</p>
-  <p>Foram usados o resultado definitivo da prova objetiva, os resultados <b>definitivos</b> da prova prática e da avaliação de títulos, e a relação de PcD deferidos, aplicando as regras do edital. Não incluem critérios de desempate que dependem de documentos dos candidatos.</p>
+  <p>Foram usados os resultados <b>definitivos</b> da prova objetiva, da prova prática e da avaliação de títulos, e a relação de PcD deferidos, aplicando as regras do edital. Não incluem critérios de desempate que dependem de documentos dos candidatos.</p>
   <p>Existem outros critérios, como <b>tempo de magistério</b> e outras pontuações, que podem ser considerados em etapas posteriores (como a atribuição de classes e aulas) e que <b>ainda não fazem parte deste resultado</b>.</p>
-  <p>Para a classificação oficial, <b>quando publicada</b>, consulte o Diário Oficial do Estado e o site da FGV.</p>
+  <p>Este aviso vale para <b>todas as disciplinas e diretorias</b>. Para a classificação oficial, <b>quando publicada</b>, consulte o Diário Oficial do Estado e o site da FGV.</p>
   <button id="ok">Entendi</button>
 </dialog>
 <script>
@@ -82,7 +85,7 @@ function draw(){ const multi=$("disc").value==="*", s=page*PER, pages=Math.max(1
   $("info").textContent=view.length.toLocaleString("pt-BR")+" candidato(s)"; $("pn").textContent=(page+1)+" / "+pages;
   $("prev").disabled=page===0; $("next").disabled=page+1>=pages; }
 $("ok").onclick=()=>$("aviso").close(); $("aviso").showModal();
-$("reabrir").onclick=e=>{e.preventDefault();$("aviso").showModal()};
+$("reabrir").onclick=$("reabrir2").onclick=e=>{e.preventDefault();$("aviso").showModal()};
 (async()=>{ man=await (await fetch("data/disciplinas.json")).json();
   $("disc").innerHTML=man.map(m=>`<option value="${m.arq}">${m.nome}</option>`).join("")+'<option value="*">Todas as disciplinas</option>';
   $("disc").onchange=setDisc; $("ure").onchange=filter; $("pcd").onchange=filter; $("ppi").onchange=filter;
